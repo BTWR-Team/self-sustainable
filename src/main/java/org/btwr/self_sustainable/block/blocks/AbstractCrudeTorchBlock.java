@@ -2,13 +2,12 @@ package org.btwr.self_sustainable.block.blocks;
 
 import net.minecraft.registry.tag.ItemTags;
 import net.minecraft.util.ItemActionResult;
-import org.btwr.self_sustainable.block.ModBlocks;
 import org.btwr.self_sustainable.block.entity.TorchBE;
-import org.btwr.self_sustainable.block.interfaces.IgnitableBlock;
 import org.btwr.self_sustainable.block.utils.TorchFireState;
 import org.btwr.self_sustainable.item.component.ModComponentsTypes;
 import org.btwr.self_sustainable.item.component.TorchFuelComponent;
 import org.btwr.self_sustainable.item.items.CrudeTorchBlockItem;
+import org.btwr.self_sustainable.sound.ModSoundEvents;
 import org.btwr.self_sustainable.tag.ModTags;
 import org.btwr.self_sustainable.util.ModTorchHandler;
 import net.minecraft.block.*;
@@ -21,7 +20,6 @@ import net.minecraft.particle.ParticleEffect;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
 import net.minecraft.state.property.Properties;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
@@ -97,6 +95,11 @@ public abstract class AbstractCrudeTorchBlock extends BlockWithEntity implements
     }
 
     @Override
+    protected boolean canPlaceAt(BlockState state, WorldView world, BlockPos pos) {
+        return AbstractTorchBlock.sideCoversSmallSquare(world, pos.down(), Direction.UP);
+    }
+
+    @Override
     public void onPlaced(World world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack)
     {
         super.onPlaced(world, pos, state, placer, itemStack);
@@ -111,8 +114,17 @@ public abstract class AbstractCrudeTorchBlock extends BlockWithEntity implements
     }
 
     @Override
-    protected boolean canPlaceAt(BlockState state, WorldView world, BlockPos pos) {
-        return AbstractTorchBlock.sideCoversSmallSquare(world, pos.down(), Direction.UP);
+    protected BlockState getStateForNeighborUpdate(
+            BlockState state, Direction direction, BlockState neighborState, WorldAccess world, BlockPos pos, BlockPos neighborPos
+    ) {
+        return direction == Direction.DOWN && !this.canPlaceAt(state, world, pos)
+                ? Blocks.AIR.getDefaultState()
+                : super.getStateForNeighborUpdate(state, direction, neighborState, world, pos, neighborPos);
+    }
+
+    @Override
+    public boolean btwr$getCanBlockLightItemOnFire(WorldAccess world, BlockPos pos) {
+        return world.getBlockState(pos).isIn(ModTags.Blocks.CRUDE_LIT_TORCHES);
     }
 
     @Override
@@ -130,7 +142,12 @@ public abstract class AbstractCrudeTorchBlock extends BlockWithEntity implements
 
             if (!world.hasRain(pos)) {
                 this.changeTorch(world, pos, world.getBlockState(pos), TorchFireState.LIT);
-                IgnitableBlock.playLitFX(world, pos);
+                world.playSound(
+                        null, BlockPos.ofFloored(pos.toCenterPos()),
+                        ModSoundEvents.TORCH_IGNITE, SoundCategory.BLOCKS,
+                        0.2F + world.random.nextFloat() * 0.1F,
+                        world.random.nextFloat() * 0.25F + 1.25F
+                );
 
                 // Ensure the block entity has the required component
                 ComponentMap components = be.getComponents();
@@ -143,7 +160,13 @@ public abstract class AbstractCrudeTorchBlock extends BlockWithEntity implements
                 be.markDirty();
             }
             else {
-                IgnitableBlock.playExtinguishSound(world, pos, false);
+                float fizzPitch = 2.6F + (world.getRandom().nextFloat() - world.getRandom().nextFloat()) * 0.8F;
+
+                world.playSound(
+                        null, pos, ModSoundEvents.TORCH_EXTINGUISH,
+                        SoundCategory.BLOCKS, 0.5F, fizzPitch
+                );
+
             }
 
             return true;
@@ -154,35 +177,28 @@ public abstract class AbstractCrudeTorchBlock extends BlockWithEntity implements
 
     @Override
     protected void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
-        if (state.getBlock() != newState.getBlock() && isFuelHavingTorchBlock(newState)) {
+        if (state.getBlock() != newState.getBlock()) {
             return;
         }
 
         super.onStateReplaced(state, world, pos, newState, moved);
     }
 
-    private boolean isFuelHavingTorchBlock(BlockState state) {
-        return state.isOf(ModBlocks.CRUDE_TORCH_LIT)
-                || state.isOf(ModBlocks.CRUDE_TORCH_SMOULDER)
-                || state.isOf(ModBlocks.CRUDE_WALL_TORCH_LIT)
-                || state.isOf(ModBlocks.CRUDE_WALL_TORCH_SMOULDER);
-    }
-
     public void smoulder(World world, BlockPos pos, BlockState state) {
-        world.playSound(null, pos, SoundEvents.BLOCK_FIRE_EXTINGUISH, SoundCategory.BLOCKS, 1f, 1f);
+        world.playSound(null, pos, ModSoundEvents.TORCH_SMOULDER, SoundCategory.BLOCKS, 1f, 1f);
         this.displaySharedParticles(state, world, pos);
         changeTorch(world, pos, state, TorchFireState.SMOULDER);
     }
 
     public void extinguish(World world, BlockPos pos, BlockState state) {
-        world.playSound(null, pos, SoundEvents.BLOCK_FIRE_EXTINGUISH, SoundCategory.BLOCKS, 1f, 1f);
+        world.playSound(null, pos, ModSoundEvents.TORCH_EXTINGUISH, SoundCategory.BLOCKS, 1f, 1f);
         this.displaySharedParticles(state, world, pos);
         changeTorch(world, pos, state, TorchFireState.BURNED_OUT);
     }
 
     public void burnOut(World world, BlockPos pos, BlockState state, boolean playSound) {
         if (playSound) {
-            world.playSound(null, pos, SoundEvents.BLOCK_FIRE_EXTINGUISH, SoundCategory.BLOCKS, 1f, 1f);
+            world.playSound(null, pos, ModSoundEvents.TORCH_EXTINGUISH, SoundCategory.BLOCKS, 1f, 1f);
         }
         this.displaySharedParticles(state, world, pos);
         changeTorch(world, pos, state, TorchFireState.BURNED_OUT);
@@ -190,7 +206,13 @@ public abstract class AbstractCrudeTorchBlock extends BlockWithEntity implements
 
     public void light(World world, BlockPos pos, BlockState state) {
         if (!world.isClient) {
-            IgnitableBlock.playLitFX(world, pos);
+            world.playSound(
+                    null,
+                    BlockPos.ofFloored(pos.toCenterPos()),
+                    ModSoundEvents.TORCH_IGNITE, SoundCategory.BLOCKS,
+                    0.2F + world.random.nextFloat() * 0.1F,
+                    world.random.nextFloat() * 0.25F + 1.25F
+            );
             displayParticle(ParticleTypes.LAVA, state, world, pos);
             displayParticle(ParticleTypes.FLAME, state, world, pos);
             changeTorch(world, pos, state, TorchFireState.LIT);

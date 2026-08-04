@@ -1,3 +1,28 @@
+## v???(dev)
+
+## v0.6
+### Warning, this is a game breaking update. Proceed with caution!
+
++ Oven changes/fixes:
+  + Added mortared variant for the oven
+  + Fixed fuel level displaying incorrectly
+  + Changed a lot on how ovens work internally, so this will likely break stuff with existing ovens in your worlds
+
+
++ Torch fixes:
+  + Fixed a missing texture/model for the unlit soul wall torch
+  + Fixed crude torches to properly break if the block below them is broken
+  + Fixed torch items not extinguishing when they fall into water
+  + Fixed unlit torches to properly light up from falling lava and fire blocks
+
+
++ Misc
+  + Added many dedicated sound events for things like using primitive firestarters, igniting stuff, knitting, etc.
+  + Fixed wet brick block to only break when an entity collides on the exact shape of the block instead of when entering the full shape of the block space it's standing on
+  + Fixed/added proper sound event for the wet brick when it breaks from being stepped on
+  + Fixed double healing which happened when using Self Sustainable and Granular Hunger together
+  + Updated the mod to Fabric Loader 0.116.15, Fabric Loader 0.19.3 & BTWR: Shared Library 0.8.5
+
 ## v0.5.3
 + Added LambDynamicLights compatibility for the crude torch items
 + Changed the bow drill to be craftable with other string items from the Fabric conventional "strings" item tag instead of just string
