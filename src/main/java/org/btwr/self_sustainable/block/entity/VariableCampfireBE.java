@@ -30,6 +30,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
 import net.minecraft.world.event.GameEvent;
+import org.btwr.shared_library.api.block.util.FireBlockUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
@@ -127,13 +128,10 @@ public class VariableCampfireBE extends BlockEntity implements Clearable {
                 world.setBlockState(pos, Blocks.FIRE.getDefaultState());
             }
 
-            /**
-            //TODO : Fire spread for campfire. NOT WORKING ATM
-             if ( iCurrentFireLevel > 1 && world.random.nextFloat() <= CHANCE_OF_FIRE_SPREAD) {
+             if ( currentFireLevel > 1 && world.random.nextFloat() <= CHANCE_OF_FIRE_SPREAD) {
                  Block fireBlock = state.getBlock();
-                 fireBlock.checkForFireSpreadFromLocation(world, pos, world.random, 0);
+                 FireBlockUtils.checkForSmoulderingSpreadFromLocation(world, pos);
              }
-             **/
 
             // New try - lighting adjacent campfires only (no fire spread atm)
             if (currentFireLevel > 1 && world.random.nextFloat() <= MODIFIED_CHANCE_OF_FIRE_SPREAD) {
@@ -184,7 +182,9 @@ public class VariableCampfireBE extends BlockEntity implements Clearable {
                         ItemStack itemStack2 = campfireBE.matchGetter
                                 .getFirstMatch(singleStackRecipeInput, world)
                                 .map(recipe -> recipe.value().craft(singleStackRecipeInput, world.getRegistryManager()))
-                                .orElse(itemStack);                        if (itemStack2.isItemEnabled(world.getEnabledFeatures()))
+                                .orElse(itemStack);
+
+                        if (itemStack2.isItemEnabled(world.getEnabledFeatures()))
                         {
                             campfireBE.itemsBeingCooked.set(0, itemStack2);
                             world.updateListeners(pos, state, state, 3);
@@ -193,11 +193,33 @@ public class VariableCampfireBE extends BlockEntity implements Clearable {
                     }
                 }
 
+                // Disabled because I still can't seem to match proper fuel values for fuel items
+                // and meat pretty much always burns when adding another fuel after it dies down to level 1
+                // Otherwise this section works as intended
+                /**
+                // Burn the cook stack if Animageddon is loaded
+                if (FabricLoader.getInstance().isModLoaded("animageddon")) {
+                    Item burnedMeatItem = Registries.ITEM.get(Identifier.of("animageddon", "burned_meat"));
+
+                    if (state.get(FIRE_LEVEL) >= 3 && !itemStack.isOf(burnedMeatItem)) {
+                        campfireBE.cookBurningCounter++;
+                        int timeToBurnFood = campfireBE.getTotalCookTime() / 2;
+
+                        if (campfireBE.burnTimeCountdown >= timeToBurnFood) {
+                            campfireBE.itemsBeingCooked.set(0, new ItemStack(burnedMeatItem));
+
+                            campfireBE.cookCounter = 0;
+                            campfireBE.cookBurningCounter = 0;
+                        }
+                    }
+                }
+                 **/
+
                 if (bl) {
                     markDirty(world, pos, state);
                 }
 
-                if ( isGoOutFromRainChance(world, pos) ) {
+                if (isGoOutFromRainChance(world, pos)) {
                     campfireBE.extinguishFire(world, state, pos, false);
                 }
 
@@ -337,7 +359,7 @@ public class VariableCampfireBE extends BlockEntity implements Clearable {
     }
 
     public static boolean isRainingOnCampfire(World world, BlockPos pos) {
-        return world.isRaining() && world.hasRain(pos);
+        return world.hasRain(pos);
     }
 
     private static int getCurrentFireLevel(BlockState state) {
