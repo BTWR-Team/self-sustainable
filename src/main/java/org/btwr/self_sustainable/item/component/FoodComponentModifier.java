@@ -1,6 +1,5 @@
 package org.btwr.self_sustainable.item.component;
 
-import com.bwt.items.BwtItems;
 import net.fabricmc.fabric.api.item.v1.DefaultItemComponentEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.component.ComponentMap;
@@ -8,9 +7,11 @@ import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.FoodComponent;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
+import net.minecraft.item.Item;
 import net.minecraft.item.Items;
-import org.btwr.core.item.BTWR_Items;
-import org.btwr.vegehenna.item.ModItems;
+import net.minecraft.registry.Registries;
+import net.minecraft.util.Identifier;
+import org.btwr.self_sustainable.item.ModItems;
 
 public class FoodComponentModifier {
 
@@ -43,8 +44,8 @@ public class FoodComponentModifier {
         context.modify(Items.COOKED_PORKCHOP, builder -> modifyEntry(builder, replaceWith(5).build()));
         context.modify(Items.COOKED_MUTTON, builder -> modifyEntry(builder, replaceWith(4).build()));
         context.modify(Items.COOKED_RABBIT, builder -> modifyEntry(builder, replaceWith(3).build()));
-        context.modify(Items.COOKED_COD, builder -> modifyEntry(builder, replaceWith(2).build()));
-        context.modify(Items.COOKED_SALMON, builder -> modifyEntry(builder, replaceWith(2).build()));
+        context.modify(Items.COOKED_COD, builder -> modifyEntry(builder, replaceWith(4).build()));
+        context.modify(Items.COOKED_SALMON, builder -> modifyEntry(builder, replaceWith(4).build()));
         context.modify(Items.APPLE, builder -> modifyEntry(builder, replaceWith(1).build()));
         context.modify(Items.MUSHROOM_STEW, builder -> modifyEntry(builder, replaceWith(2).build()));
         context.modify(Items.COOKIE, builder -> modifyEntry(builder, replaceWith(1).build()));
@@ -65,35 +66,39 @@ public class FoodComponentModifier {
         context.modify(Items.POISONOUS_POTATO, builder -> modifyEntry(builder, replaceWith(1).statusEffect(addPoisonEffect(200, 1), 1.0F).build()));
         context.modify(Items.CHORUS_FRUIT, builder -> modifyEntry(builder, replaceWith(1).build()));
 
+        context.modify(ModItems.CHOWDER, builder -> modifyEntry(builder, replaceWith(5).build()));
+        context.modify(ModItems.EGG_SCRAMBLED_RAW, builder -> modifyEntry(builder, replaceWith(3).statusEffect(addHungerEffect(600, 2), 0.3F).statusEffect(addSlownessEffect(1000, 1), 0.1F).build()));
+        context.modify(ModItems.MUSHROOM_OMELETTE_RAW, builder -> modifyEntry(builder, replaceWith(3).statusEffect(addHungerEffect(600, 2), 0.3F).statusEffect(addSlownessEffect(1000, 1), 0.1F).build()));
+        context.modify(ModItems.RAW_KEBAB, builder -> modifyEntry(builder, replaceWith(6).statusEffect(addHungerEffect(600, 2), 0.3F).statusEffect(addSlownessEffect(1000, 1), 0.1F).build()));
+        context.modify(ModItems.EGG_SCRAMBLED_COOKED, builder -> modifyEntry(builder, replaceWith(4).build()));
+        context.modify(ModItems.MUSHROOM_OMELETTE_COOKED, builder -> modifyEntry(builder, replaceWith(4).build()));
+        context.modify(ModItems.SANDWICH, builder -> modifyEntry(builder, replaceWith(5).build()));
+        context.modify(ModItems.HAM_AND_EGGS, builder -> modifyEntry(builder, replaceWith(6).build()));
+        context.modify(ModItems.STEAK_AND_POTATOES, builder -> modifyEntry(builder, replaceWith(6).build()));
+        context.modify(ModItems.COOKED_KEBAB, builder -> modifyEntry(builder, replaceWith(8).build()));
+        context.modify(ModItems.STEAK_DINNER, builder -> modifyEntry(builder, replaceWith(8).build()));
+        context.modify(ModItems.PORK_DINNER, builder -> modifyEntry(builder, replaceWith(8).build()));
+        context.modify(ModItems.WOLF_DINNER, builder -> modifyEntry(builder, replaceWith(8).build()));
+        context.modify(ModItems.CHICKEN_SOUP, builder -> modifyEntry(builder, replaceWith(8).build()));
+        context.modify(ModItems.HEARTY_STEW, builder -> modifyEntry(builder, createStew(10).build()));
+
+        if (FabricLoader.getInstance().isModLoaded("creeper_shearing")) {
+            context.modify(getOptionalItem("creeper_shearing", "creeper_oysters"), builder -> modifyEntry(builder, replaceWith(1).statusEffect(addPoisonEffect(100, 0), 1.0F).build()));
+        }
+
         if (FabricLoader.getInstance().isModLoaded("btwr")) {
-            context.modify(BTWR_Items.CHOWDER, builder -> modifyEntry(builder, replaceWith(5).build()));
-            context.modify(BTWR_Items.EGG_SCRAMBLED_RAW, builder -> modifyEntry(builder, replaceWith(3).statusEffect(addHungerEffect(600, 2), 0.3F).statusEffect(addSlownessEffect(1000, 1), 0.1F).build()));
-            context.modify(BTWR_Items.MUSHROOM_OMELETTE_RAW, builder -> modifyEntry(builder, replaceWith(3).statusEffect(addHungerEffect(600, 2), 0.3F).statusEffect(addSlownessEffect(1000, 1), 0.1F).build()));
-            context.modify(BTWR_Items.RAW_KEBAB, builder -> modifyEntry(builder, replaceWith(6).statusEffect(addHungerEffect(600, 2), 0.3F).statusEffect(addSlownessEffect(1000, 1), 0.1F).build()));
-            context.modify(BTWR_Items.EGG_SCRAMBLED_COOKED, builder -> modifyEntry(builder, replaceWith(4).build()));
-            context.modify(BTWR_Items.MUSHROOM_OMELETTE_COOKED, builder -> modifyEntry(builder, replaceWith(4).build()));
-            context.modify(BTWR_Items.SANDWICH, builder -> modifyEntry(builder, replaceWith(5).build()));
-            context.modify(BTWR_Items.HAM_AND_EGGS, builder -> modifyEntry(builder, replaceWith(6).build()));
-            context.modify(BTWR_Items.STEAK_AND_POTATOES, builder -> modifyEntry(builder, replaceWith(6).build()));
-            context.modify(BTWR_Items.COOKED_KEBAB, builder -> modifyEntry(builder, replaceWith(8).build()));
-            context.modify(BTWR_Items.STEAK_DINNER, builder -> modifyEntry(builder, replaceWith(8).build()));
-            context.modify(BTWR_Items.PORK_DINNER, builder -> modifyEntry(builder, replaceWith(8).build()));
-            context.modify(BTWR_Items.WOLF_DINNER, builder -> modifyEntry(builder, replaceWith(8).build()));
-            context.modify(BTWR_Items.CHICKEN_SOUP, builder -> modifyEntry(builder, replaceWith(8).build()));
-            context.modify(BTWR_Items.HEARTY_STEW, builder -> modifyEntry(builder, createStew(10).build()));
-            context.modify(BTWR_Items.CREEPER_OYSTERS, builder -> modifyEntry(builder, replaceWith(1).statusEffect(addPoisonEffect(100, 0), 1.0F).build()));
-            context.modify(BTWR_Items.BEAST_LIVER_RAW, builder -> modifyEntry(builder, replaceWith(5).statusEffect(addHungerEffect(600, 1), 0.3F).statusEffect(addSlownessEffect(1000, 1), 0.1F).build()));
-            context.modify(BTWR_Items.BEAST_LIVER_COOKED, builder -> modifyEntry(builder, replaceWith(6).build()));
+            context.modify(getOptionalItem("btwr", "beast_liver_raw"), builder -> modifyEntry(builder, replaceWith(5).statusEffect(addHungerEffect(600, 1), 0.3F).statusEffect(addSlownessEffect(1000, 1), 0.1F).build()));
+            context.modify(getOptionalItem("btwr", "beast_liver_cooked"), builder -> modifyEntry(builder, replaceWith(6).build()));
         }
 
         if (FabricLoader.getInstance().isModLoaded("vegehenna")) {
-            context.modify(ModItems.BOILED_POTATO, builder -> modifyEntry(builder, replaceWith(1).build()));
-            context.modify(ModItems.COOKED_CARROT, builder -> modifyEntry(builder, replaceWith(2).build()));
-            context.modify(ModItems.CHOCOLATE, builder -> modifyEntry(builder, replaceWith(2).build()));
-            context.modify(ModItems.CHOCOLATE_MILK, builder -> modifyEntry(builder, replaceWith(3).build()));
-
+            context.modify(getOptionalItem("vegehenna", "boiled_potato"), builder -> modifyEntry(builder, replaceWith(1).build()));
+            context.modify(getOptionalItem("vegehenna", "cooked_carrot"), builder -> modifyEntry(builder, replaceWith(2).build()));
+            context.modify(getOptionalItem("vegehenna", "chocolate"), builder -> modifyEntry(builder, replaceWith(2).build()));
+            context.modify(getOptionalItem("vegehenna", "chocolate_milk"), builder -> modifyEntry(builder, replaceWith(3).build()));
         }
 
+        /**
         if (FabricLoader.getInstance().isModLoaded("bwt")) {
             context.modify(BwtItems.rawEggItem, builder -> modifyEntry(builder, replaceWith(1).statusEffect(addHungerEffect(600, 2), 0.3F).build()));
             context.modify(BwtItems.wolfChopItem, builder -> modifyEntry(builder, replaceWith(3).statusEffect(addHungerEffect(1200, 2), 0.3F).statusEffect(addSlownessEffect(1000, 2), 0.1F).build()));
@@ -102,6 +107,7 @@ public class FoodComponentModifier {
             context.modify(BwtItems.cookedWolfChopItem, builder -> modifyEntry(builder, replaceWith(5).build()));
             context.modify(BwtItems.donutItem, builder -> modifyEntry(builder, new FoodComponent.Builder().nutrition(1).snack().saturationModifier(0f).build()));
         }
+         **/
     }
 
     // Directly modify the builder with access widening the put method (it was reflection before)
@@ -139,6 +145,10 @@ public class FoodComponentModifier {
 
     private static StatusEffectInstance addPoisonEffect(int dur, int amp) {
         return new StatusEffectInstance(StatusEffects.POISON, dur, amp, false, false, false);
+    }
+
+    private static Item getOptionalItem(String modId, String path) {
+        return Registries.ITEM.get(Identifier.of(modId, path));
     }
 
 }
